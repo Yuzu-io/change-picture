@@ -15,5 +15,7 @@ declare module 'vue' {
     TMenu: typeof import('tdesign-vue-next')['Menu']
     TMenuItem: typeof import('tdesign-vue-next')['MenuItem']
     TSubmenu: typeof import('tdesign-vue-next')['Submenu']
+    TUpload: typeof import('tdesign-vue-next')['Upload']
+    UploadImg: typeof import('./src/components/UploadImg/index.vue')['default']
   }
 }
