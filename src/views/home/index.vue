@@ -1,5 +1,7 @@
 <template>
-  <div class="home">123</div>
+  <div class="home">
+    <t-button>确定</t-button>
+  </div>
 </template>
 
 <script setup lang="ts"></script>
