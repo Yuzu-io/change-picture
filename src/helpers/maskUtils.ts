@@ -1,6 +1,6 @@
-function arrayToImageData(input: any, width: number, height: number) {
-  // const [r, g, b, a] = [0, 114, 189, 255];
-  const [r, g, b, a] = [0, 0, 0, 255];
+export function arrayToImageData(input: any, width: number, height: number) {
+  const [r, g, b, a] = [0, 114, 189, 255];
+  // const [r, g, b, a] = [0, 0, 0, 255];
   const arr = new Uint8ClampedArray(4 * width * height).fill(0);
   for (let i = 0; i < input.length; i++) {
 
@@ -23,6 +23,8 @@ function arrayToImageData(input: any, width: number, height: number) {
 function imageDataToImage(imageData: ImageData) {
   const canvas = imageDataToCanvas(imageData);
   const image = new Image();
+  image.width = canvas.width
+  image.height = canvas.height
   image.src = canvas.toDataURL();
   return image;
 }
@@ -34,8 +36,6 @@ function imageDataToCanvas(imageData: ImageData) {
   canvas.width = imageData.width;
   canvas.height = imageData.height;
   ctx?.putImageData(imageData, 0, 0);
-  ctx!.lineWidth=10
-  ctx!.shadowColor = 'red'
   return canvas;
 }
 

@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path:'/',
-    redirect:'/home'
+    redirect:'/cutout'
   },
   {
     path: '/login',
@@ -19,7 +19,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/dressing',
     name: 'dressing',
     component: () => import('@/views/dressing/index.vue')
-  }
+  },
+  {
+    path: '/cutout',
+    name: 'cutout',
+    component: () => import('@/views/cutout/index.vue')
+  },
 ]
 
 const router = createRouter({
