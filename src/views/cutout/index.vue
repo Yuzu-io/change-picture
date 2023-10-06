@@ -3,18 +3,37 @@
     <div class="container clearfix">
       <!-- title -->
       <div class="caption">
-        选择要保留的部分
+        <div class="header">
+          选择要保留的部分
+        </div>
+
+        <div class="toolbar">
+          <div class="tools">
+            <t-button theme="default" variant="text">重做</t-button>
+            <t-button theme="default" variant="text">撤销</t-button>
+          </div>
+          <!-- <t-button class="next-btn" theme="default" variant="outline">
+            <template #icon>
+              <ImageAddIcon />
+            </template>
+            完成
+          </t-button> -->
+          <img class="next-btn" src="@/assets/img/arrow.png" alt="">
+        </div>
       </div>
+
+
       <!-- content -->
       <div class="content">
-        <div class="left">
-          <canvas ref="canvas" id="canvas" @click="handleCanvasClick"></canvas>
-          <!-- <img class="mask-img" v-for="(item, index) in maskImgList" :key="index" :src="item.src" :width="item.width"
-            :height="item.height"> -->
+        <div class="original-image-area">
+          <canvas ref="canvas" id="canvas" @click="handleCanvasClick" @mousemove="handleCanvasMove"></canvas>
+          <img class="mask-img" :src="currentImageData?.src" :width="currentImageData?.width"
+            :height="currentImageData?.height">
           <img class="mask-img" :src="imageData?.src" :width="imageData?.width" :height="imageData?.height">
         </div>
-        <div class="right">
-          <img class="show-img" :src="imagePath" alt="" width="655.35" :style="{'-webkit-mask-image': `url(${imageData?.src})`}">
+        <div class="cutout-area">
+          <img class="show-img" :src="imagePath" alt="" width="655.35"
+            :style="{ '-webkit-mask-image': `url(${imageData?.src})` }">
         </div>
       </div>
     </div>
@@ -24,6 +43,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { getAssetsUrl } from '@/utils/getUrl';
+import debounce from '@/utils/debounce';
 import type { modelInputProps } from '@/types/model';
 import { modelData } from '@/helpers/onnxModelAPI';
 import { InferenceSession, Tensor } from 'onnxruntime-web';
@@ -44,7 +64,6 @@ const dataType: DataType = "float32"
 let tensorInfo = {};
 let modelInfo = {};
 let clicks: Array<modelInputProps> = []
-let clicksList: Array<modelInputProps> = []
 let modelScale = {
   width: 0,
   height: 0,
@@ -54,6 +73,10 @@ const imageInfo = ref<HTMLImageElement>()
 
 let imageData = ref<HTMLImageElement>()
 let maskImgList = ref<HTMLImageElement[]>([])
+
+let currentImageData = ref<HTMLImageElement>()
+let currentClicks: Array<modelInputProps> = []
+
 
 onMounted(() => {
   init()
@@ -98,9 +121,31 @@ const handleCanvasClick = (e: MouseEvent) => {
   const y = e.offsetY;
 
   clicks = [{ x, y, clickType: 1 }]
-  clicksList.push({ x, y, clickType: 1 })
 
   runONNX()
+}
+
+const handleCanvasMove = (e: MouseEvent) => {
+  const x = e.offsetX;
+  const y = e.offsetY;
+
+  currentClicks = [{ x, y, clickType: 1 }]
+
+  debounce(async () => {
+    const currentFeeds = modelData({
+      clicks: currentClicks,
+      tensor: tensorInfo as Tensor,
+      modelScale,
+    });
+    if (currentFeeds === undefined) return;
+
+    const model = modelInfo as InferenceSession;
+    const currentResults = await model.run(currentFeeds);
+    const currentOutput = currentResults[model.outputNames[0]];
+    currentImageData.value = onnxMaskToImage(currentOutput.data, currentOutput.dims[2], currentOutput.dims[3]);
+  }, 15)
+
+
 }
 
 // 运行ONNX模型
@@ -109,7 +154,8 @@ const runONNX = async () => {
     modelInfo === null ||
     clicks === null ||
     tensorInfo === null ||
-    modelScale === null
+    modelScale === null ||
+    currentClicks === null
   ) {
     return;
   } else {
@@ -122,10 +168,11 @@ const runONNX = async () => {
 
     const model = modelInfo as InferenceSession;
     const results = await model.run(feeds);
-
     const output = results[model.outputNames[0]];
 
-    maskImgList.value?.push(onnxMaskToImage(output.data, output.dims[2], output.dims[3]))
+
+
+    maskImgList.value?.push(onnxMaskToImage(output.data, output.dims[2], output.dims[3]));
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -182,13 +229,40 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
     position: relative;
 
     .caption {
-      color: #745F9A;
-      margin: 33px 0 0 20px;
+      margin: 33px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .header {
+        color: #745F9A;
+      }
+    }
+
+    // 工具栏
+    .toolbar {
+      display: flex;
+      align-items: center;
+
+      .tools{
+        margin: 0 50px 0 0;
+      }
+
+      .next-btn {
+        width: 50px;
+        height: 50px;
+        // width: 80px;
+        // height: 40px;
+        border-radius: 35.5px;
+        background-color: rgba(185, 177, 255, 0.5);
+        color: #B9ABD2;
+        border: none;
+      }
     }
 
     .content {
       width: 100%;
-      height: 548px;
+      height: 785px;
       position: absolute;
       top: 103px;
       left: 0;
@@ -197,9 +271,10 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
       display: flex;
       justify-content: space-between;
       padding: 0 28px;
+      box-sizing: border-box;
 
-      .left,
-      .right {
+      .original-image-area,
+      .cutout-area {
         width: 655.35px;
         height: 785px;
         border-radius: 10px;
@@ -210,9 +285,7 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
         justify-content: center;
       }
 
-      .left {
-        
-
+      .original-image-area {
         .mask-img {
           position: absolute;
           opacity: 0.4;
@@ -220,7 +293,7 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
         }
       }
 
-      .right {
+      .cutout-area {
         background: linear-gradient(45deg,
             rgba(0, 0, 0, 0.3) 25%,
             transparent 25%,
