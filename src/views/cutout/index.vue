@@ -9,8 +9,16 @@
 
         <div class="toolbar">
           <div class="tools">
-            <t-button theme="default" variant="text">重做</t-button>
-            <t-button theme="default" variant="text">撤销</t-button>
+            <t-button theme="default" variant="text" @click="clickRedo" :disabled="maskImgList.length === 0">
+              <template #icon>
+                <RotateIcon />
+              </template>
+            </t-button>
+            <t-button theme="default" variant="text" @click="clickCancel" :disabled="maskImgList.length === 0">
+              <template #icon>
+                <RollbackIcon />
+              </template>
+            </t-button>
           </div>
           <!-- <t-button class="next-btn" theme="default" variant="outline">
             <template #icon>
@@ -18,7 +26,7 @@
             </template>
             完成
           </t-button> -->
-          <img class="next-btn" src="@/assets/img/arrow.png" alt="">
+          <img class="next-btn" src="@/assets/img/arrow.png" alt="" @click="clickNext">
         </div>
       </div>
 
@@ -48,6 +56,7 @@ import type { modelInputProps } from '@/types/model';
 import { modelData } from '@/helpers/onnxModelAPI';
 import { InferenceSession, Tensor } from 'onnxruntime-web';
 import { onnxMaskToImage } from '@/helpers/maskUtils';
+import { RollbackIcon, RotateIcon } from 'tdesign-icons-vue-next';
 // @ts-ignore
 import npyjs from "npyjs";
 
@@ -72,6 +81,7 @@ let modelScale = {
 const imageInfo = ref<HTMLImageElement>()
 
 let imageData = ref<HTMLImageElement>()
+let oldImageData = ref<HTMLImageElement>()
 let maskImgList = ref<HTMLImageElement[]>([])
 
 let currentImageData = ref<HTMLImageElement>()
@@ -159,20 +169,22 @@ const runONNX = async () => {
   ) {
     return;
   } else {
-    const feeds = modelData({
-      clicks,
-      tensor: tensorInfo as Tensor,
-      modelScale,
-    });
-    if (feeds === undefined) return;
+    if (clicks.length !== 0) {
+      const feeds = modelData({
+        clicks,
+        tensor: tensorInfo as Tensor,
+        modelScale,
+      });
+      if (feeds === undefined) return;
 
-    const model = modelInfo as InferenceSession;
-    const results = await model.run(feeds);
-    const output = results[model.outputNames[0]];
+      const model = modelInfo as InferenceSession;
+      const results = await model.run(feeds);
+      const output = results[model.outputNames[0]];
+
+      maskImgList.value?.push(onnxMaskToImage(output.data, output.dims[2], output.dims[3]));
+    }
 
 
-
-    maskImgList.value?.push(onnxMaskToImage(output.data, output.dims[2], output.dims[3]));
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -208,6 +220,25 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
   const tensor = new Tensor(dType, npArray.data, npArray.shape);
   return tensor;
 };
+
+// tools
+// 重做
+const clickRedo = () => {
+  maskImgList.value = []
+  clicks = []
+  runONNX()
+}
+// 撤销
+const clickCancel = () => {
+  maskImgList.value.pop()
+  clicks = []
+  runONNX()
+}
+// 完成
+const clickNext = ()=>{
+  console.log('完成');
+  
+}
 </script>
 
 <style lang="scss" scoped>
@@ -244,8 +275,11 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
       display: flex;
       align-items: center;
 
-      .tools{
+      .tools {
         margin: 0 50px 0 0;
+        box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.24);
+        border-radius: 10px;
+        overflow: hidden;
       }
 
       .next-btn {
@@ -257,6 +291,7 @@ const loadNpyTensor = async (tensorFile: string, dType: DataType) => {
         background-color: rgba(185, 177, 255, 0.5);
         color: #B9ABD2;
         border: none;
+        cursor: pointer;
       }
     }
 
