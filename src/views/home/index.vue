@@ -119,6 +119,7 @@ const list = ref([
       z-index: 2;
       display: flex;
       justify-content: center;
+      box-sizing: border-box;
     }
   }
 }

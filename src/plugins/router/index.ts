@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path:'/',
-    redirect:'/cutout'
+    redirect:'/spell'
   },
   {
     path: '/login',
@@ -16,14 +16,19 @@ const routes: Array<RouteRecordRaw> = [
     component:()=>import('@/views/home/index.vue')
   },
   {
-    path: '/dressing',
-    name: 'dressing',
-    component: () => import('@/views/dressing/index.vue')
-  },
-  {
     path: '/cutout',
     name: 'cutout',
     component: () => import('@/views/cutout/index.vue')
+  },
+  {
+    path: '/spell',
+    name: 'spell',
+    component: () => import('@/views/spell/index.vue')
+  },
+  {
+    path: '/achievements',
+    name: 'achievements',
+    component: () => import('@/views/achievements/index.vue')
   },
 ]
 

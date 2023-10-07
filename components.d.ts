@@ -12,6 +12,10 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TButton: typeof import('tdesign-vue-next')['Button']
+    TDropdown: typeof import('tdesign-vue-next')['Dropdown']
+    TIcon: typeof import('tdesign-vue-next')['Icon']
+    TSpace: typeof import('tdesign-vue-next')['Space']
+    TTag: typeof import('tdesign-vue-next')['Tag']
     UploadImg: typeof import('./src/components/UploadImg/index.vue')['default']
   }
 }
