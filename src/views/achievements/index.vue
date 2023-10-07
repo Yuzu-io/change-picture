@@ -168,12 +168,16 @@ const handleClose = (index:number) => {
 
 .achievements {
   height: 100vh;
+  min-height: 900px;
+  min-width: 1440px;
   display: flex;
   justify-content: center;
 
   .container {
-    width: 1440px;
-    height: 100%;
+    // width: 1440px;
+    width: 100%;
+    // height: 100%;
+    padding: 0 38px;
     position: relative;
 
     .caption {
@@ -199,7 +203,7 @@ const handleClose = (index:number) => {
       height: 505px;
       position: absolute;
       left: 0;
-      top: 395px;
+      bottom: 0;
       z-index: 1;
     }
 
